@@ -108,8 +108,25 @@ def save_character(character, save_directory="data/save_games"):
     # Create save_directory if it doesn't exist
     # Handle any file I/O errors appropriately
     # Lists should be saved as comma-separated values
-    pass
+# Make sure the save directory exists
+    os.makedirs(save_directory, exist_ok=True)
 
+    # Build the save file path using character's name
+    filepath = os.path.join(save_directory, f"{character['name']}_save.txt")
+
+    try:
+        with open(filepath, "w") as f:
+            for key, value in character.items():
+                # If the value is a list (like inventory or quests), join it as comma-separated
+                if isinstance(value, list):
+                    value = ",".join(value)
+                # Write the line as key:value
+                f.write(f"{key}:{value}\n")
+        return True
+    except Exception as e:
+        # Could log e here if needed
+        return False
+    
 def load_character(character_name, save_directory="data/save_games"):
     """
     Load character from save file
@@ -129,7 +146,69 @@ def load_character(character_name, save_directory="data/save_games"):
     # Try to read file → SaveFileCorruptedError
     # Validate data format → InvalidSaveDataError
     # Parse comma-separated lists back into Python lists
-    pass
+filename = _save_filename(character_name, save_directory)
+    if not os.path.exists(filename):
+        raise CharacterNotFoundError(f"Character save not found for '{character_name}'.")
+
+    try:
+        with open(filename, "r", encoding="utf-8") as f:
+            lines = [line.rstrip("\n") for line in f]
+    except Exception as exc:
+        raise SaveFileCorruptedError(f"Could not read save file: {exc}")
+
+    # Parse lines into a mapping
+    data = {}
+    for raw in lines:
+        if ":" not in raw:
+            continue
+        key, _, value = raw.partition(":")
+        data[key.strip().upper()] = value.strip()
+
+    # Required fields
+    required_keys = [
+        "NAME",
+        "CLASS",
+        "LEVEL",
+        "HEALTH",
+        "MAX_HEALTH",
+        "STRENGTH",
+        "MAGIC",
+        "EXPERIENCE",
+        "GOLD",
+        "INVENTORY",
+        "ACTIVE_QUESTS",
+        "COMPLETED_QUESTS",
+    ]
+    for rk in required_keys:
+        if rk not in data:
+            raise InvalidSaveDataError(f"Missing required field in save: {rk}")
+
+    # Convert and validate types
+    try:
+        character = {
+            "name": data["NAME"],
+            "class": data["CLASS"],
+            "level": int(data["LEVEL"]),
+            "health": int(data["HEALTH"]),
+            "max_health": int(data["MAX_HEALTH"]),
+            "strength": int(data["STRENGTH"]),
+            "magic": int(data["MAGIC"]),
+            "experience": int(data["EXPERIENCE"]),
+            "gold": int(data["GOLD"]),
+            "inventory": _list_from_csv(data.get("INVENTORY", "")),
+            "active_quests": _list_from_csv(data.get("ACTIVE_QUESTS", "")),
+            "completed_quests": _list_from_csv(data.get("COMPLETED_QUESTS", "")),
+        }
+    except ValueError as exc:
+        raise InvalidSaveDataError(f"Invalid numeric value in save file: {exc}")
+
+    # Final validation of the loaded character
+    try:
+        validate_character_data(character)
+    except InvalidSaveDataError as exc:
+        raise InvalidSaveDataError(f"Loaded save is invalid: {exc}")
+
+    return character
 
 def list_saved_characters(save_directory="data/save_games"):
     """
@@ -140,7 +219,10 @@ def list_saved_characters(save_directory="data/save_games"):
     # TODO: Implement this function
     # Return empty list if directory doesn't exist
     # Extract character names from filenames
-    pass
+    if not os.path.exists(save_directory):
+        return []
+    files = os.listdir(save_directory)
+    return [f.replace("_save.txt", "") for f in files if f.endswith("_save.txt")]
 
 def delete_character(character_name, save_directory="data/save_games"):
     """
@@ -151,7 +233,13 @@ def delete_character(character_name, save_directory="data/save_games"):
     """
     # TODO: Implement character deletion
     # Verify file exists before attempting deletion
-    pass
+    filename = f"{character_name}_save.txt"
+    filepath = os.path.join(save_directory, filename)
+    if not os.path.exists(filepath):
+        raise CharacterNotFoundError(f"Character {character_name} was not found.")
+    os.remove(filepath)
+
+    return True
 
 # ============================================================================
 # CHARACTER OPERATIONS
@@ -176,7 +264,19 @@ def gain_experience(character, xp_amount):
     # Add experience
     # Check for level up (can level up multiple times)
     # Update stats on level up
-    pass
+    if character["health"] == 0:
+        raise CharacterDeadError("Character is dead, cannot gain experience.")
+
+# The while loop keeps leveling up the character until the experience equals the level * 100
+    character["experience"] += xp_amount
+    while character["experience"] >= character["level"] * 100:
+        level_up_xp = character["level"] * 100
+        character["experience"] -= level_up_xp
+        character["level"] += 1
+        character["max_health"] += 10
+        character["strength"] += 2
+        character["magic"] += 2
+        character["health"] = character["max_health"]
 
 def add_gold(character, amount):
     """
@@ -192,7 +292,14 @@ def add_gold(character, amount):
     # TODO: Implement gold management
     # Check that result won't be negative
     # Update character's gold
-    pass
+    if not isinstance(amount, (int, float)):
+        raise ValueError("amount must be a number.")
+    current = int(character.get("gold", 0))
+    new_total = current + int(amount)
+    if new_total < 0:
+        raise ValueError("Not enough gold.")
+    character["gold"] = new_total
+    return character["gold"]
 
 def heal_character(character, amount):
     """
@@ -205,7 +312,15 @@ def heal_character(character, amount):
     # TODO: Implement healing
     # Calculate actual healing (don't exceed max_health)
     # Update character health
-    pass
+    if amount <= 0:
+        return 0
+    max_h = int(character.get("max_health", 0))
+    current = int(character.get("health", 0))
+    if current >= max_h:
+        return 0
+    healed = min(int(amount), max_h - current)
+    character["health"] = current + healed
+    return healed
 
 def is_character_dead(character):
     """
@@ -214,7 +329,7 @@ def is_character_dead(character):
     Returns: True if dead, False if alive
     """
     # TODO: Implement death check
-    pass
+        return int(character.get("health", 0)) <= 0
 
 def revive_character(character):
     """
@@ -224,7 +339,12 @@ def revive_character(character):
     """
     # TODO: Implement revival
     # Restore health to half of max_health
-    pass
+    if not is_character_dead(character):
+        return False
+    max_h = int(character.get("max_health", 0))
+    revive_hp = max(1, max_h // 2)
+    character["health"] = revive_hp
+    return True
 
 # ============================================================================
 # VALIDATION
@@ -245,7 +365,30 @@ def validate_character_data(character):
     # Check all required keys exist
     # Check that numeric values are numbers
     # Check that lists are actually lists
-    pass
+     required_fields = {
+        "name": str,
+        "class": str,
+        "level": int,
+        "health": int,
+        "max_health": int,
+        "strength": int,
+        "magic": int,
+        "experience": int,
+        "gold": int,
+        "inventory": list,
+        "active_quests": list,
+        "completed_quests": list
+    }
+
+    for field, expected_type in required_fields.items():
+        if field not in character:
+            raise InvalidSaveDataError(f"Missing required field: {field}")
+        value = character[field]
+        if not isinstance(value, expected_type):
+            raise InvalidSaveDataError(f"Field '{field}' must be of type {expected_type.__name__}")
+
+    return True
+
 
 # ============================================================================
 # TESTING
