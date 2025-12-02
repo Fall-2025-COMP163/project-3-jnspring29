@@ -2,7 +2,7 @@
 COMP 163 - Project 3: Quest Chronicles
 Character Manager Module - Starter Code
 
-Name: [Your Name Here]
+Name: Jessica Springer
 
 AI Usage: [Document any AI assistance used]
 
@@ -47,7 +47,39 @@ def create_character(name, character_class):
     # - inventory=[], active_quests=[], completed_quests=[]
     
     # Raise InvalidCharacterClassError if class not in valid list
-    pass
+
+    valid_char_class = ["Warrior", "Mage", "Rogue", "Cleric"]
+
+    if character_class not in valid_char_class:
+        raise InvalidCharacterClassError(f"{character_class} is not avaliable. Enter correcr class!")
+
+    basic_stats = {}
+    if character_class == "Warrior":
+        base_stats = {"health": 120, "max_health": 120, "strength": 15, "magic": 5}
+    elif character_class == "Mage":
+        base_stats = {"health": 80, "max_health": 80, "strength": 8, "magic": 20}
+    elif character_class == "Rogue":
+        base_stats = {"health": 90, "max_health": 90, "strength": 12, "magic": 10}
+    elif character_class == "Cleric":
+        base_stats = {"health": 100, "max_health": 100, "strength": 10, "magic": 15}
+
+    stats = basic_stats[character_class]
+
+    return {
+        "name": name,
+        "class": character_class,
+        "level": 1,
+        "health": int(basic_stats["health"]),
+        "max_health": int(basic_stats["max_health"]),
+        "strength": int(basic_stats["health"]),
+        "magic": int(basic_stats["strength"]),
+        "experience": 0,
+        "gold": 100,
+        "inventory": [],
+        "active_quests": [],
+        "completed_quests": [],
+    }
+
 
 def save_character(character, save_directory="data/save_games"):
     """
