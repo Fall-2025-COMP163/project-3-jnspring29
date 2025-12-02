@@ -4,7 +4,7 @@ Main Game Module - Fixed Version
 
 Name: Jessica Springer
 
-AI Usage: No AI used
+AI Usage: AI used to debug and help to figure out problems I was stuck on
 """
 
 # Import all our custom modules
