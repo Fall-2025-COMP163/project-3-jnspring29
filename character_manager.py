@@ -8,9 +8,6 @@ AI Usage: AI used for debugging
 
 This module handles character creation, loading, and saving.
 """
-#Used AI to debug code
-
-
 import os
 from custom_exceptions import (
     InvalidCharacterClassError,
@@ -21,28 +18,15 @@ from custom_exceptions import (
 )
 
 # ============================================================================
-# HELPER FUNCTIONS (you were calling these but never defined them!)
+# CHARACTER MANAGEMENT FUNCTIONS
 # ============================================================================
-
+VALID_CLASSES = {
+    "Warrior": {"health": 120, "strength": 15, "magic": 5},
+    "Mage": {"health": 80, "strength": 8, "magic": 20},
+    "Rogue": {"health": 90, "strength": 12, "magic": 10},
+    "Cleric": {"health": 100, "strength": 10, "magic": 15},
+    
 def create_character(name, character_class):
-    """
-    Create a new character with stats based on class
-    
-    Valid classes: Warrior, Mage, Rogue, Cleric
-    
-    Returns: Dictionary with character data including:
-            - name, class, level, health, max_health, strength, magic
-            - experience, gold, inventory, active_quests, completed_quests
-    
-    Raises: InvalidCharacterClassError if class is not valid
-    """
-    valid_classes = {
-        "Warrior": {"health": 120, "strength": 15, "magic": 5},
-        "Mage": {"health": 80, "strength": 8, "magic": 20},
-        "Rogue": {"health": 90, "strength": 12, "magic": 10},
-        "Cleric": {"health": 100, "strength": 10, "magic": 15},
-    }
-
     if character_class not in valid_classes:
         raise InvalidCharacterClassError(f"Invalid class: {character_class}")
 
