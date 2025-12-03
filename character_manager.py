@@ -14,7 +14,7 @@ from custom_exceptions import (
     CharacterNotFoundError,
     SaveFileCorruptedError,
     InvalidSaveDataError, 
-    CharacterDeadError,
+    CharacterDeadError
 )
 
 # =============================================================================
