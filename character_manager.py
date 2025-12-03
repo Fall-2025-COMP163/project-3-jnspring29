@@ -71,30 +71,34 @@ def save_character(character, save_directory="data/save_games"):
     Save character to file
     
     Filename format: {character_name}_save.txt
-    
-    File format:
-    NAME: character_name
-    CLASS: class_name
-    LEVEL: 1
-    HEALTH: 120
-    MAX_HEALTH: 120
-    STRENGTH: 15
-    MAGIC: 5
-    EXPERIENCE: 0
-    GOLD: 100
-    INVENTORY: item1,item2,item3
-    ACTIVE_QUESTS: quest1,quest2
-    COMPLETED_QUESTS: quest1,quest2
-    
-    Returns: True if successful
-    Raises: PermissionError, IOError (let them propagate or handle)
     """
     if not os.path.exists(save_directory):
         os.makedirs(save_directory)
-    
 
     filename = os.path.join(save_directory, f"{character['name']}_save.txt")
-    
+
+    # Convert list fields to comma-separated strings
+    inventory_str = ",".join(character.get("inventory", []))
+    active_quests_str = ",".join(character.get("active_quests", []))
+    completed_quests_str = ",".join(character.get("completed_quests", []))
+
+    # Write to the file
+    with open(filename, "w") as file:
+        file.write(f"NAME: {character['name']}\n")
+        file.write(f"CLASS: {character['class']}\n")
+        file.write(f"LEVEL: {character['level']}\n")
+        file.write(f"HEALTH: {character['health']}\n")
+        file.write(f"MAX_HEALTH: {character['max_health']}\n")
+        file.write(f"STRENGTH: {character['strength']}\n")
+        file.write(f"MAGIC: {character['magic']}\n")
+        file.write(f"EXPERIENCE: {character['experience']}\n")
+        file.write(f"GOLD: {character['gold']}\n")
+        file.write(f"INVENTORY: {inventory_str}\n")
+        file.write(f"ACTIVE_QUESTS: {active_quests_str}\n")
+        file.write(f"COMPLETED_QUESTS: {completed_quests_str}\n")
+
+    return True
+
 
     try:
         with open(filename, "w", encoding="utf-8") as f:
