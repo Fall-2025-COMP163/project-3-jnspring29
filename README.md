@@ -128,10 +128,21 @@ This project encourages creativity! Here's what you can customize:
 Document your project with:
 
 1. **Module Architecture:** Explain your module organization
+   The custom_exceptions defines all of the exeptions in the game and are organized by their types. For example, GamerError, DataError, CharacterError, CombatError, etc.
+   
+   
 2. **Exception Strategy:** Describe when/why you raise specific exceptions
+   Exceptions ensure that invalid answers or actions are caught, informs the player(s), and everything can stay organized.
+   
 3. **Design Choices:** Justify major decisions
+   Have quests load fromn files is an easy was to expand the game without changing code, each moduel handles certain responsibilities to make it easier to read and debugg, and it is user friendly.
+
+
 4. **AI Usage:** Detail what AI assistance you used
+   I use ChatGPT to help me debugg/fix certain aspecs of my code such as spacing, grammar, and syntax errors.
+   
 5. **How to Play:** Instructions for running the game
+   Run the game by executing main.py, then either create a new game, load a game, or quit the game altogether. In the game menu you can look at stats, shop, explore, etc. Quests can be completed, characters can earn xp, gold, items, and level up with each battle they win. However, if they die they are able to revive or return to the main menu.
 
 ### What to Submit:
 
