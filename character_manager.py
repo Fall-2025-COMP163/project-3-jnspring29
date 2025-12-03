@@ -2,7 +2,7 @@
 COMP 163 - Project 3: Quest Chronicles
 Character Manager Module - Starter Code
 
-Name: Jessica Springer
+Name: [Jessica Springer]
 
 AI Usage: AI used for debugging
 
@@ -13,11 +13,12 @@ from custom_exceptions import (
     InvalidCharacterClassError,
     CharacterNotFoundError,
     SaveFileCorruptedError,
-    InvalidSaveDataError,
+    InvalidSaveDataError 
     CharacterDeadError
 )
 
-# ============================================================================
+# =============================================================================
+
 # CHARACTER MANAGEMENT FUNCTIONS
 # ============================================================================
 
