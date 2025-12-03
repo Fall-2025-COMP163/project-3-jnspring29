@@ -12,7 +12,7 @@ import os
 from custom_exceptions import (
     InvalidCharacterClassError,
     CharacterNotFoundError,
-    SaveFileCorruptedError,
+    SaveFileCorruptedError, 
     InvalidSaveDataError,
     CharacterDeadError
 )
