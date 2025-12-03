@@ -19,6 +19,7 @@ from custom_exceptions import (
 # ============================================================================
 # ENEMY DEFINITIONS
 # ============================================================================
+
 def create_enemy(enemy_type):
     """
     Create an enemy based on type
