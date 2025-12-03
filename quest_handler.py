@@ -4,7 +4,7 @@ Quest Handler Module - Starter Code
 
 Name: Jessica Springer
 
-AI Usage: [Document any AI assistance used]
+AI Usage: [Bug Fixes]
 
 This module handles quest management, dependencies, and completion.
 """
@@ -16,6 +16,9 @@ from custom_exceptions import (
     QuestNotActiveError,
     InsufficientLevelError
 )
+
+
+import character_manager
 
 # ============================================================================
 # QUEST MANAGEMENT
@@ -43,10 +46,7 @@ def accept_quest(character, quest_id, quest_data_dict):
         QuestRequirementsNotMetError if prerequisite not completed
         QuestAlreadyCompletedError if quest already done
     """
-
-
-
-if quest_id not in quest_data_dict:
+    if quest_id not in quest_data_dict:
         raise QuestNotFoundError(f"Quest '{quest_id}' not found.")
 
     quest = quest_data_dict[quest_id]
@@ -92,23 +92,23 @@ def complete_quest(character, quest_id, quest_data_dict):
     """
     if quest_id not in quest_data_dict:
         raise QuestNotFoundError(f"Quest '{quest_id}' not found.")
-    
+
     if quest_id not in character['active_quests']:
         raise QuestNotActiveError("Cannot complete a quest that is not active.")
-    
+
     quest = quest_data_dict[quest_id]
-    
-        # Remove from active, add to completed
+
+    # Remove from active, add to completed
     character['active_quests'].remove(quest_id)
     character['completed_quests'].append(quest_id)
-    
-        # Grant rewards
+
+    # Grant rewards
     xp = quest['reward_xp']
     gold = quest['reward_gold']
-    
+
     character_manager.gain_experience(character, xp)
     character_manager.add_gold(character, gold)
-    
+
     return {
         'reward_xp': xp,
         'reward_gold': gold
@@ -143,7 +143,6 @@ def get_completed_quests(character, quest_data_dict):
     """
     return [quest_data_dict[q] for q in character['completed_quests']]
 
-
 def get_available_quests(character, quest_data_dict):
     """
     Get quests that character can currently accept
@@ -159,6 +158,7 @@ def get_available_quests(character, quest_data_dict):
             available.append(q_data)
 
     return available
+
 # ============================================================================
 # QUEST TRACKING
 # ============================================================================
@@ -170,7 +170,6 @@ def is_quest_completed(character, quest_id):
     Returns: True if completed, False otherwise
     """
     return quest_id in character['completed_quests']
-
 
 def is_quest_active(character, quest_id):
     """
@@ -277,7 +276,7 @@ def get_quests_by_level(quest_data_dict, min_level, max_level):
         q_data for q_data in quest_data_dict.values()
         if min_level <= q_data['required_level'] <= max_level
     ]
-    
+
 # ============================================================================
 # DISPLAY FUNCTIONS
 # ============================================================================
@@ -376,4 +375,3 @@ if __name__ == "__main__":
     #     print("Quest accepted!")
     # except QuestRequirementsNotMetError as e:
     #     print(f"Cannot accept: {e}")
-
