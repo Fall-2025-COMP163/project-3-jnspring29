@@ -68,37 +68,58 @@ def create_character(name, character_class):
 
 def save_character(character, save_directory="data/save_games"):
     """
-    Save character to file
-    
-    Filename format: {character_name}_save.txt
+    Save character to file in a structured format.
+
+    Enhancements:
+    - Automatically handles missing fields with defaults
+    - Saves inventory and quest details cleanly
+    - Produces consistent, readable files
+    - Modular conversion helpers for easier future updates
+
+    Returns: True if successful
     """
+
+    # -------------------------------------------------------
+    # Ensure save directory exists
+    # -------------------------------------------------------
     if not os.path.exists(save_directory):
         os.makedirs(save_directory)
 
     filename = os.path.join(save_directory, f"{character['name']}_save.txt")
 
-    # Convert list fields to comma-separated strings
-    inventory_str = ",".join(character.get("inventory", []))
-    active_quests_str = ",".join(character.get("active_quests", []))
-    completed_quests_str = ",".join(character.get("completed_quests", []))
+    # -------------------------------------------------------
+    # Helper function: convert lists -> comma-separated strings
+    # -------------------------------------------------------
+    def to_csv(value):
+        if isinstance(value, list):
+            return ",".join(value)
+        return ""
 
-    # Write to the file
+    # -------------------------------------------------------
+    # Safely pull character fields with defaults
+    # -------------------------------------------------------
+    data_lines = [
+        f"NAME: {character.get('name', 'Unknown')}",
+        f"CLASS: {character.get('class', 'Unknown')}",
+        f"LEVEL: {character.get('level', 1)}",
+        f"HEALTH: {character.get('health', 100)}",
+        f"MAX_HEALTH: {character.get('max_health', 100)}",
+        f"STRENGTH: {character.get('strength', 10)}",
+        f"MAGIC: {character.get('magic', 0)}",
+        f"EXPERIENCE: {character.get('experience', 0)}",
+        f"GOLD: {character.get('gold', 0)}",
+        f"INVENTORY: {to_csv(character.get('inventory', []))}",
+        f"ACTIVE_QUESTS: {to_csv(character.get('active_quests', []))}",
+        f"COMPLETED_QUESTS: {to_csv(character.get('completed_quests', []))}"
+    ]
+
+    # -------------------------------------------------------
+    # Write everything to the save file
+    # -------------------------------------------------------
     with open(filename, "w") as file:
-        file.write(f"NAME: {character['name']}\n")
-        file.write(f"CLASS: {character['class']}\n")
-        file.write(f"LEVEL: {character['level']}\n")
-        file.write(f"HEALTH: {character['health']}\n")
-        file.write(f"MAX_HEALTH: {character['max_health']}\n")
-        file.write(f"STRENGTH: {character['strength']}\n")
-        file.write(f"MAGIC: {character['magic']}\n")
-        file.write(f"EXPERIENCE: {character['experience']}\n")
-        file.write(f"GOLD: {character['gold']}\n")
-        file.write(f"INVENTORY: {inventory_str}\n")
-        file.write(f"ACTIVE_QUESTS: {active_quests_str}\n")
-        file.write(f"COMPLETED_QUESTS: {completed_quests_str}\n")
+        file.write("\n".join(data_lines))
 
     return True
-
 
     try:
         with open(filename, "w", encoding="utf-8") as f:
