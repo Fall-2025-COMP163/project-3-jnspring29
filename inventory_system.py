@@ -4,7 +4,7 @@ Inventory System Module
 
 Name: Jessica Springer
 
-AI Usage: Used  ChatGPT assistance
+AI Usage: Implemented with ChatGPT assistance
 
 This module handles inventory management, item usage, and equipment.
 """
