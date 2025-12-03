@@ -1,269 +1,325 @@
 """
 COMP 163 - Project 3: Quest Chronicles
-Main Game Module - Fixed Version
+Character Manager Module
 
 Name: Jessica Springer
 
-AI Usage: No AI used
+AI Usage: Implemented with ChatGPT assistance
+
+This module handles character creation, loading, and saving.
 """
 
-# Import all our custom modules
-import character_manager
-import inventory_system
-import quest_handler
-import combat_system
-import game_data
-from custom_exceptions import *
+import os
+from custom_exceptions import (
+    InvalidCharacterClassError,
+    CharacterNotFoundError,
+    SaveFileCorruptedError,
+    InvalidSaveDataError,
+    CharacterDeadError
+)
 
 # ============================================================================
-# GAME STATE
+# CHARACTER MANAGEMENT FUNCTIONS
 # ============================================================================
 
-current_character = None
-all_quests = {}
-all_items = {}
-game_running = False
+def create_character(name, character_class):
+    """
+    Create a new character with stats based on class
+    
+    Valid classes: Warrior, Mage, Rogue, Cleric
+    
+    Returns: Dictionary with character data including:
+            - name, class, level, health, max_health, strength, magic
+            - experience, gold, inventory, active_quests, completed_quests
+    
+    Raises: InvalidCharacterClassError if class is not valid
+    """
+    valid_classes = {
+        "Warrior": {"health": 120, "strength": 15, "magic": 5},
+        "Mage": {"health": 80, "strength": 8, "magic": 20},
+        "Rogue": {"health": 90, "strength": 12, "magic": 10},
+        "Cleric": {"health": 100, "strength": 10, "magic": 15},
+    }
 
-# ============================================================================
-# MAIN MENU
-# ============================================================================
+    if character_class not in valid_classes:
+        raise InvalidCharacterClassError(f"Invalid class: {character_class}")
 
-def main_menu():
-    print("\n=== MAIN MENU ===")
-    print("1. New Game")
-    print("2. Load Game")
-    print("3. Exit")
-    while True:
-        choice = input("Choose (1-3): ").strip()
-        if choice in ("1", "2", "3"):
-            return int(choice)
-        print("Please enter 1, 2, or 3.")
+    base = valid_classes[character_class]
 
-def new_game():
-    global current_character
-    print("\n=== NEW GAME ===")
-    name = input("Enter character name: ").strip()
-    if not name:
-        print("Name cannot be empty.")
-        return
+    character = {
+        "name": name,
+        "class": character_class,
+        "level": 1,
+        "health": base["health"],
+        "max_health": base["health"],
+        "strength": base["strength"],
+        "magic": base["magic"],
+        "experience": 0,
+        "gold": 100,
+        "inventory": [],
+        "active_quests": [],
+        "completed_quests": []
+    }
 
-    print("Choose class: Warrior, Mage, Rogue, Cleric")
-    cls = input("Class: ").strip().title()
+    return character
+
+def save_character(character, save_directory="data/save_games"):
+    """
+    Save character to file
+    
+    Filename format: {character_name}_save.txt
+    
+    File format:
+    NAME: character_name
+    CLASS: class_name
+    LEVEL: 1
+    HEALTH: 120
+    MAX_HEALTH: 120
+    STRENGTH: 15
+    MAGIC: 5
+    EXPERIENCE: 0
+    GOLD: 100
+    INVENTORY: item1,item2,item3
+    ACTIVE_QUESTS: quest1,quest2
+    COMPLETED_QUESTS: quest1,quest2
+    
+    Returns: True if successful
+    Raises: PermissionError, IOError (let them propagate or handle)
+    """
+    if not os.path.exists(save_directory):
+        os.makedirs(save_directory)
+
+    filename = os.path.join(save_directory, f"{character['name']}_save.txt")
 
     try:
-        char = character_manager.create_character(name, cls)
-    except InvalidCharacterClassError as e:
-        print(f"Invalid class: {e}")
-        return
-
-    try:
-        character_manager.save_character(char)
+        with open(filename, "w") as file:
+            file.write(f"NAME: {character['name']}\n")
+            file.write(f"CLASS: {character['class']}\n")
+            file.write(f"LEVEL: {character['level']}\n")
+            file.write(f"HEALTH: {character['health']}\n")
+            file.write(f"MAX_HEALTH: {character['max_health']}\n")
+            file.write(f"STRENGTH: {character['strength']}\n")
+            file.write(f"MAGIC: {character['magic']}\n")
+            file.write(f"EXPERIENCE: {character['experience']}\n")
+            file.write(f"GOLD: {character['gold']}\n")
+            file.write(f"INVENTORY: {','.join(character['inventory']) if character['inventory'] else ''}\n")
+            file.write(f"ACTIVE_QUESTS: {','.join(character['active_quests']) if character['active_quests'] else ''}\n")
+            file.write(f"COMPLETED_QUESTS: {','.join(character['completed_quests']) if character['completed_quests'] else ''}\n")
     except Exception as e:
-        print(f"Warning: could not auto-save character: {e}")
+        raise e
 
-    current_character = char
-    print(f"Welcome, {char['name']} the {char['class']}!")
-    game_loop()
+    return True
 
-def load_game():
-    global current_character
-    print("\n=== LOAD GAME ===")
+def load_character(character_name, save_directory="data/save_games"):
+    filename = os.path.join(save_directory, f"{character_name}_save.txt")
 
-    saves = character_manager.list_saved_characters()
-    if not saves:
-        print("No saved characters found.")
-        return
+    if not os.path.exists(filename):
+        raise CharacterNotFoundError(f"No save file found for {character_name}")
 
-    print("Saved characters:")
-    for i, name in enumerate(saves, start=1):
-        print(f"{i}. {name}")
-
-    while True:
-        choice = input(f"Select (1-{len(saves)}) or 'c' to cancel: ").strip()
-        if choice.lower() == 'c':
-            return
-        if choice.isdigit() and 1 <= int(choice) <= len(saves):
-            sel = saves[int(choice) - 1]
-            try:
-                char = character_manager.load_character(sel)
-                current_character = char
-                print(f"Loaded {char['name']} the {char['class']}.")
-                game_loop()
-                return
-            except CharacterNotFoundError:
-                print("Save not found.")
-                return
-            except SaveFileCorruptedError:
-                print("Save file appears corrupted.")
-                return
-            except InvalidSaveDataError as e:
-                print(f"Invalid save data: {e}")
-                return
-        print("Invalid selection.")
-
-# ============================================================================
-# GAME LOOP
-# ============================================================================
-
-def game_loop():
-    global game_running, current_character
-    game_running = True
-    while game_running:
-        if current_character is None:
-            print("No active character. Returning to main menu.")
-            return
-
-        choice = game_menu()
-
-        if choice == 1:
-            view_character_stats()
-        elif choice == 2:
-            view_inventory()
-        elif choice == 3:
-            quest_menu()
-        elif choice == 4:
-            explore()
-            if current_character is None:
-                return
-        elif choice == 5:
-            shop()
-        elif choice == 6:
-            save_game()
-            print("Saved. Returning to main menu.")
-            return
-        else:
-            print("Invalid selection.")
-
-        try:
-            save_game()
-        except Exception as e:
-            print(f"Auto-save failed: {e}")
-
-def game_menu():
-    print("\n=== GAME MENU ===")
-    print("1. View Character Stats")
-    print("2. View Inventory")
-    print("3. Quest Menu")
-    print("4. Explore (Find Battles)")
-    print("5. Shop")
-    print("6. Save and Quit")
-
-    while True:
-        choice = input("Choose (1-6): ").strip()
-        if choice.isdigit() and 1 <= int(choice) <= 6:
-            return int(choice)
-        print("Please enter a number from 1 to 6.")
-
-# ============================================================================
-# GAME ACTIONS
-# ============================================================================
-
-def view_character_stats():
-    global current_character
-    c = current_character
-    if c is None:
-        print("No character loaded.")
-        return
-
-    print("\n=== CHARACTER STATS ===")
-    print(f"Name: {c['name']}")
-    print(f"Class: {c['class']}")
-    print(f"Level: {c['level']}  XP: {c['experience']}")
-    print(f"HP: {c['health']}/{c['max_health']}")
-    print(f"STR: {c['strength']}  MAG: {c['magic']}")
-    print(f"Gold: {c['gold']}")
-    print(f"Inventory slots: {len(c['inventory'])}/20")  # placeholder
-    total_quests = len(all_quests)
-    completed = len(c['completed_quests'])
-    active = len(c['active_quests'])
-    print(f"Quests: {active} active, {completed} completed ({total_quests} total)")
-
-def view_inventory():
-    global current_character, all_items
-    c = current_character
-    if c is None:
-        print("No character loaded.")
-        return
-    # Minimal stub: just print inventory
-    print("\n=== INVENTORY ===")
-    if not c['inventory']:
-        print("Inventory is empty.")
-    else:
-        for item in c['inventory']:
-            print(f"- {item}")
-
-def quest_menu():
-    global current_character, all_quests
-    c = current_character
-    if c is None:
-        print("No character loaded.")
-        return
-    print("\nQuest menu stub (replace with real quest logic)")
-
-def explore():
-    global current_character
-    c = current_character
-    if c is None:
-        print("No character loaded.")
-        return
-    print("\nExploring... You encounter a monster!")
-    # Minimal combat stub
-    print("You won! Gained 10 XP and 5 gold.")
-    character_manager.gain_experience(c, 10)
-    character_manager.add_gold(c, 5)
-
-def shop():
-    global current_character, all_items
-    c = current_character
-    if c is None:
-        print("No character loaded.")
-        return
-    print("\nShop stub (replace with real shop logic)")
-
-# ============================================================================
-# HELPERS
-# ============================================================================
-
-def save_game():
-    global current_character
-    if current_character is None:
-        raise ValueError("No character to save.")
-    character_manager.save_character(current_character)
-
-def load_game_data():
-    global all_quests, all_items
     try:
-        all_quests = game_data.load_quests()
-        all_items = game_data.load_items()
+        with open(filename, "r") as file:
+            lines = file.readlines()
+    except:
+        raise SaveFileCorruptedError(f"Could not read save file for {character_name}")
+
+    character = {}
+
+    try:
+        for line in lines:
+            line = line.strip()
+            if not line:
+                continue
+
+            if ":" not in line:
+                raise InvalidSaveDataError("Missing ':' in save data")
+
+            # --- Safe split (fixes your failing test) ---
+            if ": " in line:
+                key, value = line.split(": ", 1)
+            else:
+                key, value = line.split(":", 1)
+                value = value.lstrip()
+            # --------------------------------------------
+
+            # Lists
+            if key in ("INVENTORY", "ACTIVE_QUESTS", "COMPLETED_QUESTS"):
+                character[key.lower()] = value.split(",") if value else []
+
+            # Integers
+            elif key in ("LEVEL", "HEALTH", "MAX_HEALTH", "STRENGTH", "MAGIC", "EXPERIENCE", "GOLD"):
+                character[key.lower()] = int(value)
+
+            # Strings
+            else:
+                character[key.lower()] = value
+
     except Exception:
-        # Fallback minimal data
-        all_quests = {"quest_001": {"name": "Test Quest"}}
-        all_items = {"item_001": {"name": "Test Item", "type": "consumable", "cost": 5}}
+        raise InvalidSaveDataError("Save file format incorrect")
 
-def display_welcome():
-    print("=" * 50)
-    print("     QUEST CHRONICLES - A MODULAR RPG ADVENTURE")
-    print("=" * 50)
-    print("\nWelcome to Quest Chronicles!\n")
+    validate_character_data(character)
+    return character
+
+def list_saved_characters(save_directory="data/save_games"):
+    """
+    Get list of all saved character names
+    
+    Returns: List of character names (without _save.txt extension)
+    """
+    if not os.path.exists(save_directory):
+        return []
+
+    names = []
+    for filename in os.listdir(save_directory):
+        if filename.endswith("_save.txt"):
+            names.append(filename.replace("_save.txt", ""))
+
+    return names
+
+def delete_character(character_name, save_directory="data/save_games"):
+    """
+    Delete a character's save file
+    
+    Returns: True if deleted successfully
+    Raises: CharacterNotFoundError if character doesn't exist
+    """
+    filename = os.path.join(save_directory, f"{character_name}_save.txt")
+
+    if not os.path.exists(filename):
+        raise CharacterNotFoundError(f"No save file for {character_name}")
+
+    os.remove(filename)
+    return True
 
 # ============================================================================
-# MAIN EXECUTION
+# CHARACTER OPERATIONS
 # ============================================================================
 
-def main():
-    display_welcome()
-    load_game_data()
-    while True:
-        choice = main_menu()
-        if choice == 1:
-            new_game()
-        elif choice == 2:
-            load_game()
-        elif choice == 3:
-            print("\nThanks for playing Quest Chronicles!")
-            break
-        else:
-            print("Invalid choice.")
+def gain_experience(character, xp_amount):
+    """
+    Add experience to character and handle level ups
+    
+    Level up formula: level_up_xp = current_level * 100
+    Example when leveling up:
+    - Increase level by 1
+    - Increase max_health by 10
+    - Increase strength by 2
+    - Increase magic by 2
+    - Restore health to max_health
+    
+    Raises: CharacterDeadError if character health is 0
+    """
+    if character["health"] <= 0:
+        raise CharacterDeadError("Character is dead and cannot gain XP.")
+
+    character["experience"] += xp_amount
+
+    leveled_up = False
+
+    while character["experience"] >= character["level"] * 100:
+        character["experience"] -= character["level"] * 100
+        character["level"] += 1
+        character["max_health"] += 10
+        character["strength"] += 2
+        character["magic"] += 2
+        character["health"] = character["max_health"]
+        leveled_up = True
+
+    return leveled_up
+
+def add_gold(character, amount):
+    """
+    Add gold to character's inventory
+    
+    Args:
+        character: Character dictionary
+        amount: Amount of gold to add (can be negative for spending)
+    
+    Returns: New gold total
+    Raises: ValueError if result would be negative
+    """
+    new_total = character["gold"] + amount
+    if new_total < 0:
+        raise ValueError("Gold cannot be negative.")
+    character["gold"] = new_total
+    return character["gold"]
+
+def heal_character(character, amount):
+    if amount < 0:
+        return 0
+
+    old_health = character["health"]
+    character["health"] = min(character["health"] + amount, character["max_health"])
+    return character["health"] - old_health
+
+def is_character_dead(character):
+    """
+    Check if character's health is 0 or below
+    
+    Returns: True if dead, False if alive
+    """
+    return character["health"] <= 0
+
+def revive_character(character):
+    if not is_character_dead(character):
+        return False
+
+    character["health"] = character["max_health"] // 2
+    return True
+
+# ============================================================================
+# VALIDATION
+# ============================================================================
+
+def validate_character_data(character):
+    required = {
+        "name", "class", "level", "health", "max_health",
+        "strength", "magic", "experience", "gold",
+        "inventory", "active_quests", "completed_quests"
+    }
+
+    for field in required:
+        if field not in character:
+            raise InvalidSaveDataError(f"Missing field: {field}")
+
+    numeric_fields = ["level", "health", "max_health", "strength", "magic", "experience", "gold"]
+    for field in numeric_fields:
+        if not isinstance(character[field], int):
+            raise InvalidSaveDataError(f"{field} must be an integer")
+
+    list_fields = ["inventory", "active_quests", "completed_quests"]
+    for field in list_fields:
+        if not isinstance(character[field], list):
+            raise InvalidSaveDataError(f"{field} must be a list")
+
+    return True
+
+# ============================================================================
+# TESTING
+# ============================================================================
 
 if __name__ == "__main__":
-    main()
+    print("=== CHARACTER MANAGER TEST ===")
+    
+    # Test character creation
+    # try:
+    #     char = create_character("TestHero", "Warrior")
+    #     print(f"Created: {char['name']} the {char['class']}")
+    #     print(f"Stats: HP={char['health']}, STR={char['strength']}, MAG={char['magic']}")
+    # except InvalidCharacterClassError as e:
+    #     print(f"Invalid class: {e}")
+    
+    # Test saving
+    # try:
+    #     save_character(char)
+    #     print("Character saved successfully")
+    # except Exception as e:
+    #     print(f"Save error: {e}")
+    
+    # Test loading
+    # try:
+    #     loaded = load_character("TestHero")
+    #     print(f"Loaded: {loaded['name']}")
+    # except CharacterNotFoundError:
+    #     print("Character not found")
+    # except SaveFileCorruptedError:
+    #     print("Save file corrupted")
