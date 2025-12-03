@@ -56,7 +56,8 @@ def create_character(name, character_class):
         raise InvalidCharacterClassError(f"Invalid class: {character_class}")
 
     base = valid_classes[character_class]
-     character = {
+
+    character = {
         "name": name,
         "class": character_class,
         "level": 1,
@@ -99,7 +100,7 @@ def save_character(character, save_directory="data/save_games"):
     if not os.path.exists(save_directory):
         os.makedirs(save_directory)
 
-     filename = os.path.join(save_directory, f"{character['name']}_save.txt")
+    filename = os.path.join(save_directory, f"{character['name']}_save.txt")
 
     try:
         with open(filename, "w") as file:
@@ -149,7 +150,9 @@ def load_character(character_name, save_directory="data/save_games"):
             else:
                 key, value = line.split(":", 1)
                 value = value.lstrip()
+            # --------------------------------------------
 
+            # Lists
             if key in ("INVENTORY", "ACTIVE_QUESTS", "COMPLETED_QUESTS"):
                 character[key.lower()] = value.split(",") if value else []
 
@@ -223,7 +226,7 @@ def gain_experience(character, xp_amount):
 
     leveled_up = False
 
-     while character["experience"] >= character["level"] * 100:
+    while character["experience"] >= character["level"] * 100:
         character["experience"] -= character["level"] * 100
         character["level"] += 1
         character["max_health"] += 10
@@ -330,4 +333,3 @@ if __name__ == "__main__":
     # except CharacterNotFoundError:
     #     print("Character not found")
     # except SaveFileCorruptedError:
-    #     print("Save file corrupted")
