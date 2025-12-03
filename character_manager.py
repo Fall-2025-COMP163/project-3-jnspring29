@@ -4,21 +4,12 @@ Character Manager Module - Starter Code
 
 Name: Jessica Springer
 
-AI Usage: [Document any AI assistance used]
+AI Usage: AI used for debugging
 
 This module handles character creation, loading, and saving.
 """
 #Used AI to debug code
 
-
-"""
-COMP 163 - Project 3: Quest Chronicles
-Character Manager Module - Starter Code
-
-Name: Jessica Springer
-
-AI Usage: Debugging + syntax fixes
-"""
 
 import os
 from custom_exceptions import (
