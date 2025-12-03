@@ -6,9 +6,7 @@ Name: Jessica Springer
 
 AI Usage: [Document any AI assistance used]
 
-# AI Usage (1): Couldn't figure out why my start_battle function was giving me an error, ChatGPT told me to import the is_character_dead function from character_manager.py
-
-# AI Usage (2): Used AI (ChatGPT) to help structure/finish functions if I had errors or if I didn't have the correct formatting
+# AI Usage (1): Syntax errors and debugging
 
 Handles combat mechanics
 """
