@@ -14,7 +14,6 @@ import quest_handler
 import combat_system
 import game_data
 from custom_exceptions import *
-from inventory_system import ItemNotFoundError, InvalidItemTypeError, InventoryFullError, InsufficientResourcesError
 
 # ============================================================================
 # GAME STATE
